@@ -1,0 +1,41 @@
+import requests
+from bs4 import BeautifulSoup
+#?offset=0
+URL = 'https://vk.com/topic-388266_26072038'
+HEADERS = {'user-agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.129 Safari/537.36','Accept':'*/*'}
+HOST = 'https://vk.com'
+
+def get_html(url, params=None):
+    r = requests.get(url, headers=HEADERS, params=params)
+    return r
+
+def get_content(html):
+    soup = BeautifulSoup(html, 'html.parser')
+    items = soup.find_all('div', class_='bp_author_wrap')
+
+    accountName = []
+    for item in items:
+        accountName.append({
+            'Name': item.find('a', class_='bp_author').get_text(),
+            'Link': HOST + item.find('a', class_='bp_author').get('href'),
+        })
+    return accountName
+
+def parse():
+    offset_count = 40
+    html = get_html(URL)
+    if html.status_code == 200:
+        packageName = []
+        for offset in range(0,offset_count + 1):
+            if offset % 20 == 0:
+                print(f'Parsing page {offset} of {offset_count}...')
+                html = get_html(URL, params={'offset': offset})
+                print(get_content(html.text))
+                packageName.extend(get_content(html.text))
+        print(len(packageName))
+
+    else:
+        print('Error: Page does not open')
+
+
+parse()
